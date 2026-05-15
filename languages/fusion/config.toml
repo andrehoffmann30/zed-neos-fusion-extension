@@ -1,0 +1,5 @@
+name = "Fusion"
+grammar = "fusion"
+path_suffixes = ["fusion"]
+line_comments = ["// "]
+block_comments = [["/*", "*/"]]
