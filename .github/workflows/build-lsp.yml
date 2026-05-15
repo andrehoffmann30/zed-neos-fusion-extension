@@ -3,8 +3,13 @@ name: Build neos-fusion-ls binaries
 on:
   workflow_dispatch:
     inputs:
-      server_version:
-        description: "neos-fusion-ls git tag to build (e.g. v0.9.0)"
+      lsp_ref:
+        description: "neos-fusion-ls git ref to build (branch, tag, or SHA — e.g. main)"
+        required: true
+        type: string
+        default: "main"
+      release_version:
+        description: "Version string for the GitHub Release on this repo (e.g. 0.1.0)"
         required: true
         type: string
   push:
@@ -32,20 +37,22 @@ jobs:
             bun_target: bun-darwin-x64
 
     steps:
-      - name: Resolve server version
+      - name: Resolve refs
         id: version
         run: |
           if [ "${{ github.event_name }}" = "push" ]; then
+            echo "lsp_ref=main" >> "$GITHUB_OUTPUT"
             echo "version=${GITHUB_REF_NAME#lsp-}" >> "$GITHUB_OUTPUT"
           else
-            echo "version=${{ inputs.server_version }}" >> "$GITHUB_OUTPUT"
+            echo "lsp_ref=${{ inputs.lsp_ref }}" >> "$GITHUB_OUTPUT"
+            echo "version=${{ inputs.release_version }}" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Check out neos-fusion-ls
         uses: actions/checkout@v4
         with:
           repository: sjsone/neos-fusion-ls
-          ref: ${{ steps.version.outputs.version }}
+          ref: ${{ steps.version.outputs.lsp_ref }}
 
       - name: Set up Bun
         uses: oven-sh/setup-bun@v2
@@ -83,8 +90,8 @@ jobs:
             echo "version=${GITHUB_REF_NAME#lsp-}" >> "$GITHUB_OUTPUT"
             echo "tag=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
           else
-            echo "version=${{ inputs.server_version }}" >> "$GITHUB_OUTPUT"
-            echo "tag=lsp-${{ inputs.server_version }}" >> "$GITHUB_OUTPUT"
+            echo "version=${{ inputs.release_version }}" >> "$GITHUB_OUTPUT"
+            echo "tag=lsp-v${{ inputs.release_version }}" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Download all artifacts
