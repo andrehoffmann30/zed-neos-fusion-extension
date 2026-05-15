@@ -112,6 +112,9 @@ impl zed::Extension for NeosFusionExtension {
         worktree: &Worktree,
     ) -> Result<Option<serde_json::Value>> {
         Ok(Some(serde_json::json!({
+            "textDocumentSync": {
+                "openClose": true
+            },
             "workspacePath": worktree.root_path(),
             "folders": {
                 "packageFolders": ["DistributionPackages", "Packages/Application"],
