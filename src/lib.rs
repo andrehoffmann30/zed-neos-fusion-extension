@@ -74,6 +74,9 @@ impl NeosFusionExtension {
             &zed::LanguageServerInstallationStatus::Downloading,
         );
 
+        fs::create_dir_all(&version_dir)
+            .map_err(|e| format!("failed to create version directory: {e}"))?;
+
         zed::download_file(&asset.download_url, &binary_path, zed::DownloadedFileType::Uncompressed)
             .map_err(|e| format!("failed to download {asset_name}: {e}"))?;
 
