@@ -62,6 +62,30 @@ jobs:
       - name: Install dependencies
         run: bun install
 
+      - name: Patch server for non-VS Code LSP clients
+        run: |
+          bun --eval "
+          const fs = require('fs');
+          const src = fs.readFileSync('src/main.ts', 'utf8');
+          const patched = src.replace(
+            'connection.onInitialize(params => languageserver.onInitialize(params))',
+            \`let _pendingOptions = null;
+          connection.onInitialize(params => {
+            if (params.initializationOptions?.neosFusionLsp) _pendingOptions = params.initializationOptions.neosFusionLsp;
+            return languageserver.onInitialize(params);
+          })
+          connection.onInitialized(async () => {
+            if (_pendingOptions) {
+              await languageserver.onDidChangeConfiguration({ settings: { neosFusionLsp: _pendingOptions } });
+              _pendingOptions = null;
+            }
+          })\`
+          );
+          if (src === patched) { console.error('PATCH FAILED: pattern not found'); process.exit(1); }
+          fs.writeFileSync('src/main.ts', patched);
+          console.log('Patch applied successfully');
+          "
+
       - name: Compile standalone binary
         run: |
           bun build --compile \

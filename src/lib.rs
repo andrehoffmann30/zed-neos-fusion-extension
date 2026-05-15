@@ -109,43 +109,67 @@ impl zed::Extension for NeosFusionExtension {
     fn language_server_initialization_options(
         &mut self,
         _language_server_id: &LanguageServerId,
-        worktree: &Worktree,
+        _worktree: &Worktree,
     ) -> Result<Option<serde_json::Value>> {
         Ok(Some(serde_json::json!({
             "textDocumentSync": {
                 "openClose": true
             },
-            "workspacePath": worktree.root_path(),
-            "folders": {
-                "packageFolders": ["DistributionPackages", "Packages/Application"],
-                "ignore": []
-            },
-            "diagnostics": {
-                "enabled": true,
-                "enabledDiagnostics": [
-                    "FusionProperties",
-                    "ResourceUris",
-                    "TagNames",
-                    "EelHelperArguments",
-                    "PrototypeNames",
-                    "EmptyEel",
-                    "ActionUri",
-                    "NodeTypeDefinitions",
-                    "NonParsedFusion",
-                    "RootFusionConfiguration",
-                    "TranslationShortHand",
-                    "ParserError",
-                    "AfxWithDollarEel",
-                    "DuplicateStatements"
-                ],
-                "levels": {
-                    "deprecations": "warning"
+            "neosFusionLsp": {
+                "folders": {
+                    "packages": ["DistributionPackages", "Packages/Application"],
+                    "fusion": [],
+                    "ignore": [],
+                    "workspaceAsPackageFallback": true,
+                    "followSymbolicLinks": false,
+                    "includeHiddenDirectories": false
                 },
-                "ignoreNodeTypes": [],
-                "alwaysDiagnoseChangedFile": true
-            },
-            "inlayHint": {
-                "depth": "literal"
+                "logging": {
+                    "level": "error"
+                },
+                "diagnostics": {
+                    "enabled": true,
+                    "enabledDiagnostics": {
+                        "FusionProperties": true,
+                        "ResourceUris": true,
+                        "TagNames": true,
+                        "EelHelperArguments": true,
+                        "PrototypeNames": true,
+                        "EmptyEel": true,
+                        "ActionUri": true,
+                        "NodeTypeDefinitions": true,
+                        "NonParsedFusion": true,
+                        "RootFusionConfiguration": true,
+                        "TranslationShortHand": true,
+                        "ParserError": true,
+                        "AfxWithDollarEel": true,
+                        "DuplicateStatements": true
+                    },
+                    "ignore": {
+                        "folders": []
+                    },
+                    "alwaysDiagnoseChangedFile": true,
+                    "levels": {
+                        "deprecations": "warning"
+                    },
+                    "ignoreNodeTypes": []
+                },
+                "code": {
+                    "deprecations": {
+                        "fusion": {
+                            "prototypes": {}
+                        }
+                    },
+                    "actions": {
+                        "createNodeTypeConfiguration": {
+                            "template": "",
+                            "detectAbstractRegEx": ""
+                        }
+                    }
+                },
+                "inlayHint": {
+                    "depth": "literal"
+                }
             }
         })))
     }
