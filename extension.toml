@@ -1,0 +1,15 @@
+id = "neos-fusion"
+name = "Neos Fusion"
+description = "Neos CMS Fusion language support for Zed (syntax highlighting + LSP)"
+version = "0.1.0"
+schema_version = 1
+authors = ["Andre Hoffmann <hoffmann@punkt.de>"]
+repository = "https://github.com/andrehoffmann30/zed-neos-fusion-extension"
+
+[language_servers.neos-fusion-language-server]
+name = "Neos Fusion Language Server"
+languages = ["Fusion"]
+
+[grammars.fusion]
+repository = "https://gitlab.com/jirgn/tree-sitter-fusion"
+commit = "19db2f47ba4c3a0f6238d4ae0e2abfca16e61dd6"
