@@ -1,0 +1,102 @@
+name: Build neos-fusion-ls binaries
+
+on:
+  workflow_dispatch:
+    inputs:
+      server_version:
+        description: "neos-fusion-ls git tag to build (e.g. v0.9.0)"
+        required: true
+        type: string
+  push:
+    tags:
+      - "lsp-v*"
+
+jobs:
+  build:
+    name: Build ${{ matrix.target }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      matrix:
+        include:
+          - target: linux-x86_64
+            runner: ubuntu-latest
+            bun_target: bun-linux-x64
+          - target: linux-aarch64
+            runner: ubuntu-latest
+            bun_target: bun-linux-arm64
+          - target: macos-aarch64
+            runner: macos-latest
+            bun_target: bun-darwin-arm64
+          - target: macos-x86_64
+            runner: macos-latest
+            bun_target: bun-darwin-x64
+
+    steps:
+      - name: Resolve server version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "push" ]; then
+            echo "version=${GITHUB_REF_NAME#lsp-}" >> "$GITHUB_OUTPUT"
+          else
+            echo "version=${{ inputs.server_version }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Check out neos-fusion-ls
+        uses: actions/checkout@v4
+        with:
+          repository: sjsone/neos-fusion-ls
+          ref: ${{ steps.version.outputs.version }}
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Compile standalone binary
+        run: |
+          bun build --compile \
+            --target=${{ matrix.bun_target }} \
+            ./src/main.ts \
+            --outfile neos-fusion-language-server-${{ matrix.target }}
+
+      - name: Upload binary artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: neos-fusion-language-server-${{ matrix.target }}
+          path: neos-fusion-language-server-${{ matrix.target }}
+
+  release:
+    name: Create GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Resolve version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "push" ]; then
+            echo "version=${GITHUB_REF_NAME#lsp-}" >> "$GITHUB_OUTPUT"
+            echo "tag=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+          else
+            echo "version=${{ inputs.server_version }}" >> "$GITHUB_OUTPUT"
+            echo "tag=lsp-${{ inputs.server_version }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: binaries
+          merge-multiple: true
+
+      - name: Create release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: "neos-fusion-ls ${{ steps.version.outputs.version }}"
+          body: "Standalone binaries of [neos-fusion-ls](https://github.com/sjsone/neos-fusion-ls) ${{ steps.version.outputs.version }}"
+          files: binaries/*
